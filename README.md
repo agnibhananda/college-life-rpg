@@ -2,11 +2,11 @@
 This is a simple text-based Role-Playing Game (RPG) written in C. The game allows players to create a character, explore a fantasy world, manage inventory, and complete quests.
 
 ## Features
-Character creation
-Basic inventory system
-Quest log
-Simple exploration system
-Character status display
+. Character creation
+. Basic inventory system
+. Quest log
+. Simple exploration system
+. Character status display
 
 ## Requirements
 GCC compiler
