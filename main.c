@@ -157,7 +157,7 @@ void gameLoop(){
             printf("Thanks for playing! Goodbye.\n");
             break;
         }else{
-            printf("Enter a valid command you illiterate\n");
+            printf("Please enter a valid command\n");
         }
 }
     }
