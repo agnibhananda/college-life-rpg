@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#define MAX_NAME_LENGT
+#define MAX_NAME_LENGTH 50
+#define MAX_INVENTORY 10
 #define MAX_QUESTS 5
 
 typedef struct{
@@ -156,7 +157,7 @@ void gameLoop(){
             printf("Thanks for playing! Goodbye.\n");
             break;
         }else{
-            printf("Enter a valid command you illiterate\n");
+            printf("Please enter a valid command\n");
         }
 }
     }
