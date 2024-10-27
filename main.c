@@ -255,7 +255,7 @@ void checkForEvents()
 void gameLoop()
 {
     char input[20];
-    while (1)
+    while (42)
     {
         printf("\nWhat would you like to do? \n");
         printf("1. Check Status\n");
