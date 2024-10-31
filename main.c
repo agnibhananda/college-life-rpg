@@ -84,9 +84,18 @@ typedef struct
     int month;
 } Event;
 
+typedef struct {
+    char name[MAX_NAME_LENGTH];
+    char description[MAX_DESCRIPTION_LENGTH];
+    int memberCount;
+    int joined;
+} Club;
+
 Character player;
 Inventory inventory;
 QuestLog questLog;
+Club clubs[MAX_CLUBS];
+int clubCount = 0;
 Event events[MAX_EVENTS];
 int eventCount =0;
 int currentDay= 1;
@@ -97,8 +106,6 @@ void initCharacter()
     printf("Enter your name: ");
     fgets(player.name,MAX_NAME_LENGTH,stdin);
     player.name[strcspn(player.name,"\n")] = 0;
-    player.health =100;
-    player.maxHealth= 100;
     player.energy =100;
     player.maxEnergy= 100;
     player.intelligence= 10;
@@ -110,6 +117,51 @@ void initCharacter()
     player.cgpa = 0.0;
     player.credits= 0;
     player.money =1000;
+}
+void strangerTalk(){
+    player.energy-=10;
+    int r = rand();
+    if(r%5==0){
+        printf("You met a good guy :) !!\nCHARISMA INCREASED!\nSTRESS DECREASED!");
+        player.charisma+=10;
+        if (player.stress>=10) player.stress-=10;
+        else player.stress = 0;
+    }
+    else if(r%2==0) printf("You failed to meet anyone");
+    else{
+        printf("You met a bully :( !!\nCHARISMA DECREASES!\nSTRESS INCREASED!)");
+        player.stress+=10;
+        if (player.charisma>=10) player.charisma-=10;
+        else player.charisma = 0;
+    }
+}
+
+void trackExam(){
+    if(currentDay==15) printf("Your Exam is today");
+    else if(currentDay<15) printf("Your Exam is in %d days",15-currentDay);
+    else printf("Your Exam is in %d days",45-currentDay);
+
+}
+
+void sleep(){
+    if(player.energy<=50) player.energy+=50;
+    else player.energy=100;
+    player.health += 10;
+    if (player.health > player.maxHealth) player.health = player.maxHealth;
+    if (player.stress>=10) player.stress-=10;
+    else player.stress = 0;
+    currentDay++;
+   if (currentDay > 30) {
+        currentDay = 1;
+        currentMonth++;
+        if (currentMonth > 12) {
+            currentMonth = 1;
+            player.semester++;
+        }
+    }
+    printf("Sleep success!!\nEnergy increased!\nStress decreased!");
+    printf("It's now day %d of month %d, semester %d.\n", currentDay, currentMonth, player.semester);
+    checkForEvents();
 }
 
 void printStatus() {
@@ -205,8 +257,6 @@ void printQuests()
     }
 }
 
-
-
 void initEvents()
 {
     strcpy(events[0].name, "Induction");
@@ -251,6 +301,116 @@ void checkForEvents()
     }
 }
 
+void eat() {
+    printf("Where would you like to eat?\n");
+    printf("1. Cafeteria (Rs.30)\n");
+    printf("2. Local Restaurant (Rs.150)\n");
+    printf("3. Mess (Rs.0)\n");
+
+    int choice;
+    char input[10];
+    printf("Enter your choice: ");
+    fgets(input, sizeof(input), stdin);
+    choice = atoi(input);
+
+    switch(choice) {
+        case 1:
+            if (player.money >= 30) {
+                player.money -= 30;
+                player.health += 15;
+                player.energy += 20;
+                printf("You eat a meal at the cafeteria.\n");
+            } else {
+                printf("You don't have enough money to eat at the cafeteria.\n");
+            }
+            break;
+        case 2:
+            if (player.money >= 150) {
+                player.money -= 150;
+                player.health += 25;
+                player.energy += 30;
+                player.stress -= 10;
+                printf("You enjoy a delicious meal at a local restaurant.\n");
+            } else {
+                printf("You don't have enough money to eat at a restaurant.\n");
+            }
+            break;
+        case 3:
+            player.health += 10;
+            player.energy += 15;
+            printf("You eat from the campus mess, Annapurna.\n");
+            break;
+        default:
+            printf("Invalid choice. You skip the meal.\n");
+            player.health -= 5;
+            player.energy -= 10;
+            player.stress += 5;
+    }
+
+    if (player.health > player.maxHealth) player.health = player.maxHealth;
+    if (player.energy > player.maxEnergy) player.energy = player.maxEnergy;
+    if (player.stress < 0) player.stress = 0;
+    if (player.stress > 100) player.stress = 100;
+}
+
+void initClubs() {
+    strcpy(clubs[0].name, "Open Source Development Society");
+    strcpy(clubs[0].description, "A club for Development enthusiasts and aspiring programmers.");
+    clubs[0].memberCount = 30;
+    clubs[0].joined = 0;
+
+    strcpy(clubs[1].name, "Knuth Programming hub");
+    strcpy(clubs[1].description, "Improve your DSA and Competetive programming skills");
+    clubs[1].memberCount = 50;
+    clubs[1].joined = 0;
+
+    strcpy(clubs[2].name, "DebSoc");
+    strcpy(clubs[2].description, "Improve your public speaking and argumentation skills.");
+    clubs[2].memberCount = 25;
+    clubs[2].joined = 0;
+
+    strcpy(clubs[3].name, "Cresendo");
+    strcpy(clubs[3].description, "Improve your singing and music skills");
+    clubs[3].memberCount = 20;
+    clubs[3].joined = 0;
+
+    strcpy(clubs[4].name, "Thespian");
+    strcpy(clubs[4].description, "Express yourself through acting and stage production.");
+    clubs[4].memberCount = 20;
+    clubs[4].joined = 0;
+
+    clubCount = 5;
+}
+
+void joinClub() {
+    printf("\nAvailable Clubs:\n");
+    for (int i = 0; i < clubCount; i++) {
+        printf("%d. %s (%s members)\n", i + 1, clubs[i].name, clubs[i].joined ? "Joined" : clubs[i].memberCount);
+        printf("   Description: %s\n", clubs[i].description);
+    }
+
+    int choice;
+    char input[10];
+    printf("Enter the number of the club you want to join: ");
+    fgets(input, sizeof(input), stdin);
+    choice = atoi(input);
+
+    if (choice >= 1 && choice <= clubCount) {
+        if (!clubs[choice - 1].joined) {
+            clubs[choice - 1].joined = 1;
+            clubs[choice-1].memberCount++;
+            printf("You've joined the %s!\n", clubs[choice - 1].name);
+            player.experience += 20;
+            player.charisma += 2;
+            player.stress += 5;
+            if (player.stress > 100) player.stress = 100;
+        } else {
+            printf("You're already a member of this club.\n");
+        }
+    } else {
+        printf("Invalid club choice.\n");
+    }
+}
 
 void gameLoop()
 {
@@ -266,10 +426,10 @@ void gameLoop()
         printf("6. Sleep\n");
         printf("7. Manage Finances\n");
         printf("8. Attend Workshop\n");
-        printf("9. Take Exam\n");
+        printf("9. Track Exam\n");
         printf("10. Join Club\n");
         printf("11. Change Location\n");
-        printf("12. Talk to NPC\n");
+        printf("12. Talk to a stranger\n");
         printf("13. View Inventory\n");
         printf("14. View Quests\n");
         printf("15. Quit Game\n");
@@ -292,10 +452,10 @@ void gameLoop()
                 //exercise();
                 break;
             case 5:
-                //eat();
+                eat();
                 break;
             case 6:
-               // sleep();
+                sleep();
                 break;
 
             case 7:
@@ -306,16 +466,20 @@ void gameLoop()
                 break;
 
             case 9:
-               // takeExam();
+                trackExam();
                 break;
             case 10:
-                //joinClub();
+                joinClub();
                 break;
             case 11:
                // changeLocation();
                 break;
             case 12:
-               // talkToNPC();
+                if(player.energy<10) printf("NOT ENOUGH ENERGY , GET SOME SLEEP OR REST!");
+                else{
+                    player.energy-=10;
+                    strangerTalk();
+                }
                 break;
             case 13:
                 printInventory();
@@ -337,6 +501,7 @@ int main() {
     srand(time(NULL));
     initCharacter();
     initEvents();
+    initClubs();
     addQuest("Ace Your First Semester", "Achieve a CGPA of 8.5 or higher in your first semester.\n", 0.2);
     addQuest("Join a Club", "Become a member of at least one student club.\n", 0.1);
     addQuest("Master a Skill", "Reach level 5 in any skill.\n",0.15);
