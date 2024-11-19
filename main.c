@@ -35,6 +35,7 @@ typedef struct
     float cgpa;
     int credits;
     int money;
+    int dance_skill;
 } Character;
 
 typedef struct
@@ -138,6 +139,14 @@ FinancialHistory financialHistory = {0};
 Location locations[MAX_LOCATIONS];
 int locationCount = 0;
 Story story = {1, 0, 0, 0, 0};
+
+void clearScreen() {
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
 
 void attendWorkshop()
 {
@@ -325,54 +334,63 @@ void printInventory()
 
 void cafefight()
 {
-    printf("ERROR! ERROR! HUNGRY STUDENTS ATTACKED!! PROTECT YOURSELF\n");
-    int num;
-    printf("REMEMBER: if a number matches their hit your energy decreases, else your energy increases,\n3 consecutive mismatch will result in decrease of health");
-    int d = 0;
-    srand(time(0));
-    while (d != 20)
-    {
-        while (1)
-        {
-            printf("Enter a hit b/w 1 and 10");
-            scanf("%d", &num);
-            if (num >= 1 && num <= 10)
-            {
-                break;
+    printf("\n=== CAFETERIA SHOWDOWN! ===\n");
+    printf("Hungry students are fighting for the last plate of food!\n");
+    printf("Rules:\n");
+    printf("1. Choose a number between 1 and 10\n");
+    printf("2. If your number matches theirs, you lose energy\n");
+    printf("3. If your number is different, you gain energy\n");
+    printf("4. The battle lasts for 5 rounds\n\n");
+
+    int rounds = 5;  // Reduced from 20 to 5 rounds
+    int consecutive_hits = 0;
+
+    for (int round = 1; round <= rounds; round++) {
+        printf("\nRound %d/%d\n", round, rounds);
+        printf("Your current energy: %d\n", player.energy);
+
+        int num;
+        char input[10];
+        do {
+            printf("Enter your move (1-10): ");
+            fgets(input, sizeof(input), stdin);
+            num = atoi(input);
+        } while (num < 1 || num > 10);
+
+        int opponent_move = (rand() % 10) + 1;
+        printf("Hungry student's move: %d\n", opponent_move);
+
+        if (num == opponent_move) {
+            player.energy = (player.energy <= 10) ? 0 : player.energy - 10;
+            consecutive_hits++;
+            printf("Hit! Lost 10 energy\n");
+
+            if (consecutive_hits >= 3) {
+                player.health = (player.health <= 10) ? 0 : player.health - 10;
+                printf("Three consecutive hits! Lost 10 health\n");
             }
+        } else {
+            player.energy = (player.energy >= 90) ? 100 : player.energy + 10;
+            consecutive_hits = 0;
+            printf("Dodge! Gained 10 energy\n");
         }
-        int lower = 1;
-        int upper = 10;
-        int random_number = (rand() % (upper - lower + 1)) + lower;
-        printf("HUNGRY STUDENT THROW: %d\n", random_number);
-        int c = 0;
-        if (num == random_number)
-        {
-            c++;
-            player.energy -= 10;
-            if (player.health == 0)
-            {
-                printf("YOU ARE OUT! BETTER LUCK NEXT TIME...");
-                exit(0);
-            }
-            else if (c == 3)
-            {
-                player.health -= 10;
-            }
-            if (player.energy == 0)
-            {
-                player.health -= 10;
-                player.energy += 40;
-            }
+
+        if (player.health <= 0) {
+            printf("\nYou've been defeated! Better luck next time...\n");
+            return;
         }
-        else
-        {
-            c = 0;
-            player.energy += 10;
-        }
-        d++;
+
+        // Short pause between rounds
+        printf("\nPress Enter for next round...");
+        getchar();
     }
+
+    printf("\nYou survived the cafeteria battle!\n");
+    // Bonus reward for completing the battle
+    player.experience += 20;
+    printf("Gained 20 experience points for your bravery!\n");
 }
+
 
 void eat()
 {
@@ -469,7 +487,7 @@ void initCharacter()
 
 void study()
 {
-    printf("Where do you want to study?\n1. LRC (energy=50, exam prep gain=20)\n2. Room (energy=20, exam prep gain=5)\n3. With Friends (energy=30, charisma gain=10, exam prep gain=20)\n");
+    printf("Where do you want to study?\n1. LRC (energy=50, exam prep gain=20, Intelligence gain = 3)\n2. Room (energy=20, exam prep gain=5, Intelligence gain = 2)\n3. With Friends (energy=30, charisma gain=10, exam prep gain=20, Intelligence gain = 3)\n");
     int st;
     scanf("%d", &st);
     getchar();
@@ -479,15 +497,18 @@ void study()
     case 1:
         player.energy -= 50;
         player.exam_prep += 20;
+        player.intelligence += 3;
         break;
     case 2:
         player.energy -= 20;
         player.exam_prep += 5;
+        player.intelligence +=2;
         break;
     case 3:
         player.energy -= 30;
         player.exam_prep += 20;
         player.charisma += 10;
+        player.intelligence +=1;
         break;
     default:
         printf("Invalid choice.\n");
@@ -896,7 +917,7 @@ void socialize()
         int chance = rand() % 100;
         player.energy -= 10;
 
-        if (chance < 30)
+        if (chance < 80)
         {
             printf("\nYou had a great conversation about the upcoming events!\n");
             player.charisma += 2;
@@ -1000,13 +1021,10 @@ void socialize()
     }
 }
 
+// Modified combat function with reduced randomness for dance battles
 int combat(const char *opponent, int type)
 {
     printf("\n=== Battle with %s ===\n", opponent);
-
-    // Type 0: Regular battle
-    // Type 1: Dance battle
-    // Type 2: Debate battle
 
     int playerScore = 0;
     int opponentScore = 0;
@@ -1018,9 +1036,9 @@ int combat(const char *opponent, int type)
         opponentScore = 100 + (rand() % 20);
         break;
 
-    case 1: // Dance battle
-        playerScore = player.charisma + story.dance_skill + (rand() % 20);
-        opponentScore = 80 + (rand() % 20);
+    case 1: // Dance battle - made easier and more predictable
+        playerScore = player.charisma + story.dance_skill + (rand() % 10); // Reduced randomness
+        opponentScore = 60 + (rand() % 10); // Lowered base difficulty
         break;
 
     case 2: // Debate battle
@@ -1046,87 +1064,230 @@ int combat(const char *opponent, int type)
     }
 }
 
-void gameLoop()
-{
+void displayStoryProgress() {
+    printf("\n=== Current Story Progress ===\n");
+    printf("Act %d\n", story.act);
+
+    switch(story.act) {
+        case 1:
+            printf("Chapter: Freshman Beginnings\n");
+            printf("Goal: Establish yourself in college life\n");
+            break;
+        case 2:
+            printf("Chapter: Social Butterfly\n");
+            printf("Goal: Rise in campus social hierarchy\n");
+            break;
+        case 3:
+            printf("Chapter: Academic Challenges\n");
+            printf("Goal: Secure your position in the library\n");
+            break;
+        case 4:
+            printf("Chapter: Campus Corruption\n");
+            printf("Goal: Expose the truth and confront the Dean\n");
+            break;
+    }
+}
+
+void displayActOptions(int act) {
+    printf("\nAvailable Actions:\n");
+
+    // Common options available in all acts
+    printf("1. Check Status\n");
+    printf("2. Eat\n");
+    printf("3. Sleep\n");
+
+    switch(act) {
+        case 1:
+            // Act 1: Focus on basic survival and initial integration
+            printf("4. Study\n");
+            printf("5. Join Club\n");
+            printf("6. Talk to Stranger\n");
+            printf("7. Change Location\n");
+            break;
+
+        case 2:
+            // Act 2: Focus on social growth and dance battle
+            printf("4. Socialize\n");
+            printf("5. Exercise\n");
+            printf("6. Change Location\n");
+            printf("7. Attend Workshop\n");
+            break;
+
+        case 3:
+            // Act 3: Focus on academic challenges
+            printf("4. Study\n");
+            printf("5. Track Exam\n");
+            printf("6. Change Location\n");
+            printf("7. View Quests\n");
+            printf("8. Manage Finances\n");
+            break;
+
+        case 4:
+            // Act 4: Final chapter - expose corruption
+            printf("4. Socialize (Gather Intel)\n");
+            printf("5. Change Location\n");
+            printf("6. Manage Finances\n");
+            printf("7. View Evidence\n");
+
+            if(story.corruption_exposed) {
+                printf("8. Confront Dean\n");
+            }
+
+            if(story.deanDefeated) {
+                printf("\n=== Congratulations! You've won the game! ===\n");
+                printf("You've become a campus legend and saved the university!\n");
+            }
+            break;
+    }
+    printf("0. Quit Game\n");
+}
+
+void checkActProgression() {
+    int previousAct = story.act;
+
+    switch(story.act) {
+        case 1:
+            // Requirements unchanged for Act 1 -> 2
+            if(player.charisma >= 15 && player.intelligence >= 15) {
+                story.act = 2;
+                printf("\n=== Congratulations! You've advanced to Act 2! ===\n");
+                printf("You've gained enough confidence to enter the social scene!\n");
+                printf("\nPress Enter to continue...");
+                getchar();
+            }
+            break;
+
+        case 2:
+            // Easier progression from Act 2 -> 3
+            // Now either winning the dance battle OR achieving social status can progress
+            if(story.dance_battle_won) {
+                story.act = 3;
+                printf("\n=== Congratulations! You've advanced to Act 3! ===\n");
+                printf("Your social achievements have earned you respect. Time to focus on academics!\n");
+                printf("\nPress Enter to continue...");
+                getchar();
+            }
+            break;
+
+        case 3:
+            // Requirements unchanged for Act 3 -> 4
+            if(story.library_secured && player.exam_prep >= 50) {
+                story.act = 4;
+                printf("\n=== Congratulations! You've advanced to Act 4! ===\n");
+                printf("While studying, you've discovered hints of corruption...\n");
+                printf("\nPress Enter to continue...");
+                getchar();
+            }
+            break;
+    }
+
+    if(previousAct != story.act) {
+        clearScreen();
+    }
+}
+
+
+void handleActChoice(int act, int choice) {
+    clearScreen();  // Clear screen before executing any choice
+
+    // Common options across all acts
+    if(choice == 1) printStatus();
+    else if(choice == 2) eat();
+    else if(choice == 3) mysleep();
+    else if(choice == 0) {
+        printf("Thanks for playing! Goodbye!\n");
+        exit(0);
+    }
+
+    // Act-specific choices
+    switch(act) {
+        case 1:
+            switch(choice) {
+                case 4: study(); break;
+                case 5: joinClub(); break;
+                case 6: strangerTalk(); break;
+                case 7: changeLocation(); break;
+            }
+            break;
+
+        case 2:
+            switch(choice) {
+                case 4: socialize(); break;
+                case 5: exercise(); break;
+                case 6: changeLocation(); break;
+                case 7: attendWorkshop(); break;
+            }
+            break;
+
+        case 3:
+            switch(choice) {
+                case 4: study(); break;
+                case 5: trackExam(); break;
+                case 6: changeLocation(); break;
+                case 7: printQuests(); break;
+                case 8: manageFinances(); break;
+            }
+            break;
+
+        case 4:
+            switch(choice) {
+                case 4: socialize(); break;
+                case 5: changeLocation(); break;
+                case 6: manageFinances(); break;
+                case 7:
+                    if(story.corruption_exposed) {
+                        printf("\nCollected Evidence:\n");
+                        printf("- Suspicious financial records\n");
+                        printf("- Witness testimonies\n");
+                        printf("- Documented irregularities\n");
+                    } else {
+                        printf("\nNo evidence collected yet.\n");
+                    }
+                    break;
+                case 8:
+                    if(story.corruption_exposed && !story.deanDefeated) {
+                        printf("\nConfronting the Dean...\n");
+                        changeLocation(); // This will trigger the final boss battle
+                    }
+                    break;
+            }
+            break;
+    }
+
+    printf("\nPress Enter to continue...");
+    getchar();  // Wait for user input before clearing screen again
+    clearScreen();
+}
+
+
+void gameLoop() {
     char input[20];
-    while (1)
-    {
-        printf("\nWhat would you like to do? \n");
-        printf("1. Check Status\n");
-        printf("2. Study\n");
-        printf("3. Socialize\n");
-        printf("4. Exercise\n");
-        printf("5. Eat\n");
-        printf("6. Sleep\n");
-        printf("7. Manage Finances\n");
-        printf("8. Attend Workshop\n");
-        printf("9. Track Exam\n");
-        printf("10. Join Club\n");
-        printf("11. Change Location\n");
-        printf("12. Talk to a stranger\n");
-        printf("13. View Inventory\n");
-        printf("14. View Quests\n");
-        printf("15. Quit Game\n");
-        printf("Enter your choice: ");
+    story.act = 1; // Start with Act 1
+
+    while(1) {
+        clearScreen();
+        displayStoryProgress();
+        displayActOptions(story.act);
+
+        printf("\nEnter your choice: ");
         fgets(input, sizeof(input), stdin);
         int choice = atoi(input);
 
-        switch (choice)
-        {
-        case 1:
+        handleActChoice(story.act, choice);
+
+        // Check for act progression after each action
+        checkActProgression();
+
+        // Check for game completion
+        if(story.deanDefeated && story.act == 4) {
+            clearScreen();
+            printf("\n=== Congratulations! You've completed College Life RPG! ===\n");
+            printf("You've become a campus legend and saved the university!\n");
+            printf("\nFinal Stats:\n");
             printStatus();
+            printf("\nPress Enter to exit...");
+            getchar();
             break;
-        case 2:
-            study();
-            break;
-        case 3:
-            socialize();
-            break;
-        case 4:
-            exercise();
-            break;
-        case 5:
-            eat();
-            break;
-        case 6:
-            mysleep();
-            break;
-
-        case 7:
-            manageFinances();
-            break;
-        case 8:
-            attendWorkshop();
-            break;
-
-        case 9:
-            trackExam();
-            break;
-        case 10:
-            joinClub();
-            break;
-        case 11:
-            changeLocation();
-            break;
-        case 12:
-            if (player.energy < 10)
-                printf("NOT ENOUGH ENERGY , GET SOME SLEEP OR REST!");
-            else
-            {
-                strangerTalk();
-            }
-            break;
-        case 13:
-            printInventory();
-            break;
-        case 14:
-            printQuests();
-            break;
-        case 15:
-            printf("Thanks for playing! Goodbye!\n");
-            return;
-        default:
-            printf("Enter a valid choice you illiterate.\n");
         }
     }
 }
