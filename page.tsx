@@ -42,4 +42,28 @@ export default function Component() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
       <div className="w-full max-w-4xl bg-black text-green-400 p-4 rounded-lg shadow-lg font-mono">
-        <div className="flex 
+        <div className="flex items-center mb-4">
+          <Terminal className="mr-2" />
+          <h1 className="text-xl font-bold">College Life RPG Terminal</h1>
+        </div>
+        <div ref={outputRef} className="h-96 overflow-y-auto mb-4 whitespace-pre-wrap">
+          {output.map((line, index) => (
+            <div key={index}>{line}</div>
+          ))}
+        </div>
+        <div className="flex items-center">
+          <span className="mr-2">{'>'}</span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleInput}
+            className="flex-grow bg-transparent outline-none"
+            aria-label="Command input"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
